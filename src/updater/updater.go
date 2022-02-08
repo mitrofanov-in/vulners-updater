@@ -41,13 +41,37 @@ type Plugin struct {
 	Type       string        `json:"type"`
 }
 
+//var strHead
+
+var url = "https://sc.interfax.ru/rest/analysis"
+
+func HttpQueryPost(url string, jstr []byte) string {
+	client := &http.Client{}
+	/*
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			}}
+	*/
+
+	req_http, _ := http.NewRequest("POST", url, bytes.NewBuffer(jstr))
+	req_http.Header.Set("x-apikey", strHead)
+	resp_http, err := client.Do(req_http)
+	if err != nil {
+		panic(err)
+	}
+	defer resp_http.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp_http.Body)
+	return string(body)
+
+}
+
 var cookie_auth []*http.Cookie
 
 func main() {
 
 	client := &http.Client{}
-
-	//strHead :=
 
 	fmt.Println(strHead)
 
@@ -78,23 +102,10 @@ func main() {
 
 	jStr_crit := []byte(`{"query":{"name":"","description":"","context":"","status":-1,"createdTime":0,"modifiedTime":0,"groups":[],"type":"vuln","tool":"listvuln","sourceType":"cumulative","startOffset":0,"endOffset":50,"filters":[{"id":"firstSeen","filterName":"firstSeen","operator":"=","type":"vuln","isPredefined":true,"value":"0:7"},{"id":"severity","filterName":"severity","operator":"=","type":"vuln","isPredefined":true,"value":"4"}],"vulnTool":"listvuln"},"sourceType":"cumulative","columns":[],"type":"vuln"}`)
 
-	req_crit, _ := http.NewRequest("POST", "https://sc.interfax.ru/rest/analysis", bytes.NewBuffer(jStr_crit))
 	//req_lgn.Header.Set("Content-Type", "application/json")
 
-	for i := range cookie_auth {
-		req_crit.AddCookie(cookie_auth[i])
-	}
-
-	req_crit.Header.Set("x-apikey", strHead)
-
-	resp_crit, err := client.Do(req_crit)
-	if err != nil {
-		panic(err)
-	}
-
-	defer resp_crit.Body.Close()
-	body_crit, _ := ioutil.ReadAll(resp_crit.Body)
-	//fmt.Println(string(body_crit))
+	body_crit := HttpQueryPost(url, jStr_crit)
+	fmt.Println(string(body_crit))
 
 	var m map[string]interface{}
 	json.Unmarshal([]byte(body_crit), &m)
@@ -172,19 +183,8 @@ func main() {
 		jStr_med := []byte(jsonData)
 
 		///////////////////////////////////// POST STRING ////////////////////////////////////
-		req_med, _ := http.NewRequest("POST", "https://sc.interfax.ru/rest/analysis", bytes.NewBuffer(jStr_med))
-		//req_lgn.Header.Set("Content-Type", "application/json")
 
-		req_med.Header.Set("x-apikey", strHead)
-
-		resp_med, err := client.Do(req_med)
-		if err != nil {
-			panic(err)
-		}
-
-		defer resp_med.Body.Close()
-		body_med, _ := ioutil.ReadAll(resp_med.Body)
-
+		body_med := HttpQueryPost(url, jStr_med)
 		var m_med map[string]interface{}
 		json.Unmarshal([]byte(body_med), &m_med)
 		//fmt.Println(string(body_med))
@@ -203,7 +203,7 @@ func main() {
 			Uuid := ""
 			Uuid = fmt.Sprintf("%v", item.(map[string]interface{})["uuid"])
 
-			file, err := os.Create(str + "_" + DNSFileName + ".txt")
+			file, _ := os.Create(str + "_" + DNSFileName + ".txt")
 			file.WriteString(DNSFileName + " ")
 			file.WriteString(Uuid)
 
@@ -240,19 +240,7 @@ func main() {
 			jStr_vulndetail := []byte(jsonDataVulnDetail)
 			//fmt.Println(string(jStr_vulndetail))
 
-			req_vulndetail, _ := http.NewRequest("POST", "https://sc.interfax.ru/rest/analysis", bytes.NewBuffer(jStr_vulndetail))
-			//req_lgn.Header.Set("Content-Type", "application/json")
-
-			req_vulndetail.Header.Set("x-apikey", strHead)
-
-			resp_vulndetail, err := client.Do(req_vulndetail)
-			if err != nil {
-				panic(err)
-			}
-
-			defer resp_vulndetail.Body.Close()
-			body_vulndetail, _ := ioutil.ReadAll(resp_vulndetail.Body)
-
+			body_vulndetail := HttpQueryPost(url, jStr_vulndetail)
 			var m_vulndetail map[string]interface{}
 			json.Unmarshal([]byte(body_vulndetail), &m_vulndetail)
 			//fmt.Println(string(body_vulndetail))
@@ -271,32 +259,5 @@ func main() {
 
 		}
 	}
-
-	/*
-					for _, item := range u_med.([]interface{}) {
-						fmt.Printf("%v ", item.(map[string]interface{})["pluginText"])
-					}
-
-
-
-				jTest1 := []byte(`{"query":{"name":"","description":"","context":"","status":-1,"createdTime":0,"modifiedTime":0,"groups":[],"type":"vuln","tool":"listvuln","sourceType":"cumulative","startOffset":0,"endOffset":50,"filters"
-				:[{"id":"pluginID","filterName":"pluginID","operator":"=","type":"vuln","isPredefined":true,
-				"value":test},
-				{"id":"firstSeen","filterName":"firstSeen","operator":"=","type":"vuln","isPredefined":true,"value":"0:7"},
-				{"id":"severity","filterName":"severity","operator":"=","type":"vuln","isPredefined":true,"value":"2"}],"vulnTool":"listvuln"},"sourceType":"cumulative","columns":[],"type":"vuln"}`)
-
-		{"query":{"name":"","description":"","context":"","status":-1,"createdTime":0,"modifiedTime":0,"groups":[],"type":"vuln","tool":"vulndetails","sourceType":"cumulative","startOffset":0,"endOffset":50,"filters":
-		[{"id":"uuid","filterName":"uuid","operator":"=","type":"vuln","isPredefined":true,"value":"1c807ebc-f3f7-4836-83c5-d1c0112ba4c5"},
-		{"id":"pluginID","filterName":"pluginID","operator":"=","type":"vuln","isPredefined":true,"value":"157353"},
-		{"id":"port","filterName":"port","operator":"=","type":"vuln","isPredefined":true,"value":"0"},
-		{"id":"repository","filterName":"repository","operator":"=","type":"vuln",
-		"isPredefined":true,"value":[{"id":"2"}]},{"id":"firstSeen","filterName":"firstSeen","operator":"=","type":"vuln","isPredefined":true,"value":"0:7"},
-		{"id":"severity","filterName":"severity","operator":"=","type":"vuln","isPredefined":true,"value":"2"}],"vulnTool":"vulndetails"},
-		"sourceType":"cumulative","columns":[],"type":"vuln"}
-
-
-	*/
-
-	//var s []string
 
 }
