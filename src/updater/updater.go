@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 type Filters struct {
@@ -46,7 +47,7 @@ func main() {
 
 	client := &http.Client{}
 
-	//str
+	//strHead :=
 
 	fmt.Println(strHead)
 
@@ -138,7 +139,7 @@ func main() {
 		fmt.Printf("%v ", item_med.(map[string]interface{})["pluginID"])
 
 		str := ""
-		str = fmt.Sprintf("%v ", item_med.(map[string]interface{})["pluginID"])
+		str = fmt.Sprintf("%v", item_med.(map[string]interface{})["pluginID"])
 
 		plugStruct := Plugin{
 			Query: Query{
@@ -194,19 +195,105 @@ func main() {
 
 		for _, item := range u_med.([]interface{}) {
 			fmt.Printf("%v ", item.(map[string]interface{})["dnsName"])
-		}
-	}
-	/*
-			for _, item := range u_med.([]interface{}) {
-				fmt.Printf("%v ", item.(map[string]interface{})["pluginText"])
+			fmt.Printf("%v ", item.(map[string]interface{})["uuid"])
+
+			DNSFileName := ""
+			DNSFileName = fmt.Sprintf("%v", item.(map[string]interface{})["dnsName"])
+
+			Uuid := ""
+			Uuid = fmt.Sprintf("%v", item.(map[string]interface{})["uuid"])
+
+			file, err := os.Create(str + "_" + DNSFileName + ".txt")
+			file.WriteString(DNSFileName + " ")
+			file.WriteString(Uuid)
+
+			plugStructDetail := Plugin{
+				Query: Query{
+					Name:         "",
+					Description:  "",
+					Context:      "",
+					Status:       -1,
+					CreatedTime:  0,
+					ModifiedTime: 0,
+					Groups:       y,
+					Type:         "vuln",
+					Tool:         "vulndetails",
+					SourceType:   "cumulative",
+					StartOffset:  0,
+					EndOffset:    50,
+					Filters: []Filters{
+						{ID: "uuid", FilterName: "uuid", Operator: "=", Type: "vuln", IsPredefined: true, Value: Uuid},
+						{ID: "pluginID", FilterName: "pluginID", Operator: "=", Type: "vuln", IsPredefined: true, Value: str},
+						{ID: "port", FilterName: "port", Operator: "=", Type: "vuln", IsPredefined: true, Value: "0"},
+						{ID: "firstSeen", FilterName: "firstSeen", Operator: "=", Type: "vuln", IsPredefined: true, Value: "0:7"},
+						{ID: "severity", FilterName: "severity", Operator: "=", Type: "vuln", IsPredefined: true, Value: "2"},
+					},
+					VulnTool: "vulndetails",
+				},
+				SourceType: "cumulative",
+				Columns:    y,
+				Type:       "vuln",
 			}
 
+			jsonDataVulnDetail, _ := json.Marshal(plugStructDetail)
+
+			jStr_vulndetail := []byte(jsonDataVulnDetail)
+			//fmt.Println(string(jStr_vulndetail))
+
+			req_vulndetail, _ := http.NewRequest("POST", "https://sc.interfax.ru/rest/analysis", bytes.NewBuffer(jStr_vulndetail))
+			//req_lgn.Header.Set("Content-Type", "application/json")
+
+			req_vulndetail.Header.Set("x-apikey", strHead)
+
+			resp_vulndetail, err := client.Do(req_vulndetail)
+			if err != nil {
+				panic(err)
+			}
+
+			defer resp_vulndetail.Body.Close()
+			body_vulndetail, _ := ioutil.ReadAll(resp_vulndetail.Body)
+
+			var m_vulndetail map[string]interface{}
+			json.Unmarshal([]byte(body_vulndetail), &m_vulndetail)
+			//fmt.Println(string(body_vulndetail))
+			f_vulndetail := m_vulndetail["response"]
+			j_vulndetail := f_vulndetail.(map[string]interface{})
+			u_vulndetail := j_vulndetail["results"]
+
+			for _, item := range u_vulndetail.([]interface{}) {
+				fmt.Printf("%v ", item.(map[string]interface{})["pluginText"])
+
+				PlugTextW := ""
+				PlugTextW = fmt.Sprintf("%v", item.(map[string]interface{})["pluginText"])
+				file.WriteString(PlugTextW)
+				defer file.Close()
+			}
+
+		}
+	}
+
+	/*
+					for _, item := range u_med.([]interface{}) {
+						fmt.Printf("%v ", item.(map[string]interface{})["pluginText"])
+					}
 
 
-		jTest1 := []byte(`{"query":{"name":"","description":"","context":"","status":-1,"createdTime":0,"modifiedTime":0,"groups":[],"type":"vuln","tool":"listvuln","sourceType":"cumulative","startOffset":0,"endOffset":50,"filters"
-		:[{"id":"pluginID","filterName":"pluginID","operator":"=","type":"vuln","isPredefined":true,
-		"value":test},
-		{"id":"firstSeen","filterName":"firstSeen","operator":"=","type":"vuln","isPredefined":true,"value":"0:7"},{"id":"severity","filterName":"severity","operator":"=","type":"vuln","isPredefined":true,"value":"2"}],"vulnTool":"listvuln"},"sourceType":"cumulative","columns":[],"type":"vuln"}`)
+
+				jTest1 := []byte(`{"query":{"name":"","description":"","context":"","status":-1,"createdTime":0,"modifiedTime":0,"groups":[],"type":"vuln","tool":"listvuln","sourceType":"cumulative","startOffset":0,"endOffset":50,"filters"
+				:[{"id":"pluginID","filterName":"pluginID","operator":"=","type":"vuln","isPredefined":true,
+				"value":test},
+				{"id":"firstSeen","filterName":"firstSeen","operator":"=","type":"vuln","isPredefined":true,"value":"0:7"},
+				{"id":"severity","filterName":"severity","operator":"=","type":"vuln","isPredefined":true,"value":"2"}],"vulnTool":"listvuln"},"sourceType":"cumulative","columns":[],"type":"vuln"}`)
+
+		{"query":{"name":"","description":"","context":"","status":-1,"createdTime":0,"modifiedTime":0,"groups":[],"type":"vuln","tool":"vulndetails","sourceType":"cumulative","startOffset":0,"endOffset":50,"filters":
+		[{"id":"uuid","filterName":"uuid","operator":"=","type":"vuln","isPredefined":true,"value":"1c807ebc-f3f7-4836-83c5-d1c0112ba4c5"},
+		{"id":"pluginID","filterName":"pluginID","operator":"=","type":"vuln","isPredefined":true,"value":"157353"},
+		{"id":"port","filterName":"port","operator":"=","type":"vuln","isPredefined":true,"value":"0"},
+		{"id":"repository","filterName":"repository","operator":"=","type":"vuln",
+		"isPredefined":true,"value":[{"id":"2"}]},{"id":"firstSeen","filterName":"firstSeen","operator":"=","type":"vuln","isPredefined":true,"value":"0:7"},
+		{"id":"severity","filterName":"severity","operator":"=","type":"vuln","isPredefined":true,"value":"2"}],"vulnTool":"vulndetails"},
+		"sourceType":"cumulative","columns":[],"type":"vuln"}
+
 
 	*/
 
