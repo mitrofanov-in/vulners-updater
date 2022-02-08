@@ -8,13 +8,45 @@ import (
 	"net/http"
 )
 
+type Filters struct {
+	ID           string `json:"id"`
+	FilterName   string `json:"filterName"`
+	Operator     string `json:"operator"`
+	Type         string `json:"type"`
+	IsPredefined bool   `json:"isPredefined"`
+	Value        string `json:"value"`
+}
+type Query struct {
+	Name         string        `json:"name"`
+	Description  string        `json:"description"`
+	Context      string        `json:"context"`
+	Status       int           `json:"status"`
+	CreatedTime  int           `json:"createdTime"`
+	ModifiedTime int           `json:"modifiedTime"`
+	Groups       []interface{} `json:"groups"`
+	Type         string        `json:"type"`
+	Tool         string        `json:"tool"`
+	SourceType   string        `json:"sourceType"`
+	StartOffset  int           `json:"startOffset"`
+	EndOffset    int           `json:"endOffset"`
+	Filters      []Filters     `json:"filters"`
+	VulnTool     string        `json:"vulnTool"`
+}
+
+type Plugin struct {
+	Query      Query         `json:"query"`
+	SourceType string        `json:"sourceType"`
+	Columns    []interface{} `json:"columns"`
+	Type       string        `json:"type"`
+}
+
 var cookie_auth []*http.Cookie
 
 func main() {
 
 	client := &http.Client{}
 
-	//strHead := "accesskey" + "=" + "" + "; " + "secretkey" + "=" + ""
+	//str
 
 	fmt.Println(strHead)
 
@@ -100,8 +132,69 @@ func main() {
 	j_med := f_med.(map[string]interface{})
 	u_med := j_med["results"]
 
-	for _, item := range u_med.([]interface{}) {
-		fmt.Printf("%v ", item.(map[string]interface{})["pluginID"])
+	var y []interface{}
+
+	for _, item_med := range u_med.([]interface{}) {
+		fmt.Printf("%v ", item_med.(map[string]interface{})["pluginID"])
+
+		str := ""
+		str = fmt.Sprintf("%v ", item_med.(map[string]interface{})["pluginID"])
+
+		plugStruct := Plugin{
+			Query: Query{
+				Name:         "",
+				Description:  "",
+				Context:      "",
+				Status:       -1,
+				CreatedTime:  0,
+				ModifiedTime: 0,
+				Groups:       y,
+				Type:         "vuln",
+				Tool:         "listvuln",
+				SourceType:   "cumulative",
+				StartOffset:  0,
+				EndOffset:    50,
+				Filters: []Filters{
+					{ID: "pluginID", FilterName: "pluginID", Operator: "=", Type: "vuln", IsPredefined: true, Value: str},
+					{ID: "firstSeen", FilterName: "firstSeen", Operator: "=", Type: "vuln", IsPredefined: true, Value: "0:7"},
+					{ID: "severity", FilterName: "severity", Operator: "=", Type: "vuln", IsPredefined: true, Value: "2"},
+				},
+				VulnTool: "listvuln",
+			},
+			SourceType: "cumulative",
+			Columns:    y,
+			Type:       "vuln",
+		}
+
+		jsonData, _ := json.Marshal(plugStruct)
+
+		jStr_med := []byte(jsonData)
+
+		///////////////////////////////////// POST STRING ////////////////////////////////////
+		req_med, _ := http.NewRequest("POST", "https://sc.interfax.ru/rest/analysis", bytes.NewBuffer(jStr_med))
+		//req_lgn.Header.Set("Content-Type", "application/json")
+
+		req_med.Header.Set("x-apikey", strHead)
+
+		resp_med, err := client.Do(req_med)
+		if err != nil {
+			panic(err)
+		}
+
+		defer resp_med.Body.Close()
+		body_med, _ := ioutil.ReadAll(resp_med.Body)
+
+		var m_med map[string]interface{}
+		json.Unmarshal([]byte(body_med), &m_med)
+		//fmt.Println(string(body_med))
+
+		f_med := m_med["response"]
+		j_med := f_med.(map[string]interface{})
+		u_med := j_med["results"]
+
+		for _, item := range u_med.([]interface{}) {
+			fmt.Printf("%v ", item.(map[string]interface{})["dnsName"])
+		}
 	}
 	/*
 			for _, item := range u_med.([]interface{}) {
@@ -117,69 +210,6 @@ func main() {
 
 	*/
 
-	test := "157353"
+	//var s []string
 
-	type Filters struct {
-		ID           string `json:"id"`
-		FilterName   string `json:"filterName"`
-		Operator     string `json:"operator"`
-		Type         string `json:"type"`
-		IsPredefined bool   `json:"isPredefined"`
-		Value        string `json:"value"`
-	}
-	type Query struct {
-		Name         string        `json:"name"`
-		Description  string        `json:"description"`
-		Context      string        `json:"context"`
-		Status       int           `json:"status"`
-		CreatedTime  int           `json:"createdTime"`
-		ModifiedTime int           `json:"modifiedTime"`
-		Groups       []interface{} `json:"groups"`
-		Type         string        `json:"type"`
-		Tool         string        `json:"tool"`
-		SourceType   string        `json:"sourceType"`
-		StartOffset  int           `json:"startOffset"`
-		EndOffset    int           `json:"endOffset"`
-		Filters      []Filters     `json:"filters"`
-		VulnTool     string        `json:"vulnTool"`
-	}
-
-	type Plugin struct {
-		Query      Query         `json:"query"`
-		SourceType string        `json:"sourceType"`
-		Columns    []interface{} `json:"columns"`
-		Type       string        `json:"type"`
-	}
-
-	var y []interface{}
-
-	plugStruct := Plugin{
-		Query: Query{
-			Name:         "",
-			Description:  "",
-			Context:      "",
-			Status:       -1,
-			CreatedTime:  0,
-			ModifiedTime: 0,
-			Groups:       y,
-			Type:         "vuln",
-			Tool:         "listvuln",
-			SourceType:   "cumulative",
-			StartOffset:  0,
-			EndOffset:    50,
-			Filters: []Filters{
-				{ID: "pluginID", FilterName: "pluginID", Operator: "=", Type: "vuln", IsPredefined: true, Value: test},
-				{ID: "firstSeen", FilterName: "firstSeen", Operator: "=", Type: "vuln", IsPredefined: true, Value: "0:7"},
-				{ID: "severity", FilterName: "severity", Operator: "=", Type: "vuln", IsPredefined: true, Value: "2"},
-			},
-			VulnTool: "listvuln",
-		},
-		SourceType: "cumulative",
-		Columns:    y,
-		Type:       "vuln",
-	}
-
-	jsonData, _ := json.Marshal(plugStruct)
-
-	fmt.Println(string(jsonData))
 }
