@@ -1,0 +1,12 @@
+co-runner-03.devel.ifx  0a35e414-39ec-49eb-9d36-b22c2735df11<plugin_output>
+    Fixed package     : linux-generic_5.4.0.97.101
+    Fixed package     : linux-headers-5.4.0-97_5.4.0-97.110
+    Fixed package     : linux-headers-5.4.0-97-generic_5.4.0-97.110
+    Fixed package     : linux-headers-generic_5.4.0.97.101
+    Fixed package     : linux-headers-virtual_5.4.0.97.101
+    Fixed package     : linux-image-5.4.0-97-generic_5.4.0-97.110
+    Fixed package     : linux-image-generic_5.4.0.97.101
+    Fixed package     : linux-libc-dev_5.4.0-97.110
+    Fixed package     : linux-modules-5.4.0-97-generic_5.4.0-97.110
+    Fixed package     : linux-modules-extra-5.4.0-97-generic_5.4.0-97.110
+    Fixed package     : linux-virtual_5.4.0.97.101
