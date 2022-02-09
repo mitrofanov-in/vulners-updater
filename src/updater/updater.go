@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strings"
 )
 
 ////////// STRUCT COMBINATION ///////////////
@@ -81,7 +82,7 @@ type PluginSort struct {
 	Type       string        `json:"type"`
 }
 
-//var strHead
+//var strHead =
 
 var url = "https://sc.interfax.ru/rest/analysis"
 
@@ -149,6 +150,26 @@ func main() {
 	for _, item := range u.([]interface{}) {
 		fmt.Printf("%v", item.(map[string]interface{})["ip"])
 	}
+
+	/*
+		////////////////////////////////// TEST READ JSON ////////////////////////////
+
+		data, err := ioutil.ReadFile("./jsonSumid.json")
+		if err != nil {
+			fmt.Print(err)
+		}
+
+		var obj PluginSort
+
+		err = json.Unmarshal(data, &obj)
+		if err != nil {
+			fmt.Println("error:", err)
+		}
+
+		fmt.Println(obj.Query.Tool)
+
+		///////////////////////////////////// FUNDAMENT //////////////////////////////
+	*/
 
 	PluginSortStruct := PluginSort{
 		Query: QuerySort{
@@ -290,10 +311,12 @@ func main() {
 				reHtml := regexp.MustCompile("(?m)[\r\n]+^.*plugin_output.*$")
 				re := regexp.MustCompile("(?m)[\r\n]+^.*Installed package.*$")
 				resHtml := reHtml.ReplaceAllString(PlugTextW, "")
-				fmt.Printf(resHtml)
 				res := re.ReplaceAllString(resHtml, "")
-				fmt.Printf(res)
-				file.WriteString("" + res)
+				res1 := strings.ReplaceAll(res, "Fixed package", "")
+				res2 := strings.ReplaceAll(res1, ":", "")
+				res3 := strings.ReplaceAll(res2, "\n", " ")
+
+				file.WriteString(res3)
 				defer file.Close()
 			}
 
