@@ -272,7 +272,7 @@ func main() {
 				Uuid := ""
 				Uuid = fmt.Sprintf("%v", item.(map[string]interface{})["uuid"])
 
-				file, _ := os.Create(str + "_" + DNSFileName + ".txt")
+				file, _ := os.Create("vulners-hosts/" + str + "_" + DNSFileName + ".txt")
 				//file.WriteString(DNSFileName + " ")
 				//file.WriteString(" " + Uuid)
 
