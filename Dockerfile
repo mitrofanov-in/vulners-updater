@@ -5,7 +5,9 @@ COPY src .
 ADD .env.enc .
 ARG PASS_CHECKER
 RUN apk add openssl
-RUN openssl enc -d -aes-128-cbc -nosalt -k $PASS_CHECKER -in .env.enc -out .env
+#RUN ls -l .env.enc
+#RUN openssl enc --help
+RUN openssl enc -d -aes-128-cbc -pbkdf2 -nosalt -k $PASS_CHECKER -in .env.enc -out .env
 ENV GOROOT /usr/local/go
 #RUN ln -s /app/getenv ${GOROOT}/src/
 #RUN ln -s /app/auth ${GOROOT}/src/
