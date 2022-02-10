@@ -9,6 +9,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 ////////// STRUCT COMBINATION ///////////////
@@ -82,9 +84,18 @@ type PluginSort struct {
 	Type       string        `json:"type"`
 }
 
-//var strHead =
+//var strHead = "accesskey" + "=" + "9e3330df67be4330a21599ee66d87d9c" + "; " + "secretkey" + "=" + "d74e49ad9de64afbb0d76cc8c36d893a"
+
+//// GLOBAL ////////
+
+var tnblUser string = GoDotEnvVariable("tnblUser")
+var tnblPassword string = GoDotEnvVariable("tnblPassword")
+
+var strHead = "accesskey" + "=" + tnblUser + "; " + "secretkey" + "=" + tnblPassword
 
 var url = "https://sc.interfax.ru/rest/analysis"
+
+//////// POST QUERY SHEMA ////////
 
 func HttpQueryPost(url string, jstr []byte) string {
 
@@ -115,16 +126,20 @@ func ConvertMap(body string) interface{} {
 	return u
 }
 
+func GoDotEnvVariable(key string) string {
+
+	// load .env file
+	godotenv.Load(".env")
+	return os.Getenv(key)
+}
+
 func main() {
 
-	arguments := os.Args
-	levl := arguments[1]
 	var y []interface{}
 
 	client := &http.Client{}
-
+	mux := http.NewServeMux()
 	/////////////// TEST GET QUERY CHECK AUTHENTIFICATION //////////////
-	//fmt.Println(strHead)
 	req, err := http.NewRequest("GET", "https://sc.interfax.ru/rest/currentUser", nil)
 	if err != nil {
 		fmt.Println("Got error %s", err.Error())
@@ -140,16 +155,6 @@ func main() {
 	fmt.Println(string(body))
 
 	///////// POST QUERY CRITICAL /////////////
-
-	jStr_crit := []byte(`{"query":{"name":"","description":"","context":"","status":-1,"createdTime":0,"modifiedTime":0,"groups":[],"type":"vuln","tool":"listvuln","sourceType":"cumulative","startOffset":0,"endOffset":50,"filters":[{"id":"firstSeen","filterName":"firstSeen","operator":"=","type":"vuln","isPredefined":true,"value":"0:7"},{"id":"severity","filterName":"severity","operator":"=","type":"vuln","isPredefined":true,"value":"4"}],"vulnTool":"listvuln"},"sourceType":"cumulative","columns":[],"type":"vuln"}`)
-	body_crit := HttpQueryPost(url, jStr_crit)
-	//fmt.Println(string(body_crit))
-
-	u := ConvertMap(body_crit)
-
-	for _, item := range u.([]interface{}) {
-		fmt.Printf("%v", item.(map[string]interface{})["ip"])
-	}
 
 	/*
 		////////////////////////////////// TEST READ JSON ////////////////////////////
@@ -171,55 +176,12 @@ func main() {
 		///////////////////////////////////// FUNDAMENT //////////////////////////////
 	*/
 
-	PluginSortStruct := PluginSort{
-		Query: QuerySort{
-			Name:         "",
-			Description:  "",
-			Context:      "",
-			Status:       -1,
-			CreatedTime:  0,
-			ModifiedTime: 0,
-			Groups:       y,
-			Type:         "vuln",
-			Tool:         "sumid",
-			SourceType:   "cumulative",
-			StartOffset:  0,
-			EndOffset:    50,
-			Filters: []FiltersSort{
-				{ID: "firstSeen", FilterName: "firstSeen", Operator: "=", Type: "vuln", IsPredefined: true, Value: "0:7"},
-				{ID: "severity", FilterName: "severity", Operator: "=", Type: "vuln", IsPredefined: true, Value: levl},
-			},
-			SortColumn:    "severity",
-			SortDirection: "desc",
-			VulnTool:      "sumid",
-		},
-		SourceType: "cumulative",
-		SortField:  "severity",
-		SortDir:    "desc",
-		Columns:    y,
-		Type:       "vuln",
-	}
+	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		request.ParseForm()
+		levl := request.FormValue("vuln")
 
-	jsonDataSort, _ := json.Marshal(PluginSortStruct)
-
-	jStr_medSort := []byte(jsonDataSort)
-
-	///////////////////////// MUX ///////////////////////
-
-	//fmt.Println(string(jStr_medSort))
-
-	body_med := HttpQueryPost(url, jStr_medSort)
-
-	u_med := ConvertMap(body_med)
-
-	for _, item_med := range u_med.([]interface{}) {
-		fmt.Printf("%v ", item_med.(map[string]interface{})["pluginID"])
-
-		str := ""
-		str = fmt.Sprintf("%v", item_med.(map[string]interface{})["pluginID"])
-
-		plugStruct := Plugin{
-			Query: Query{
+		PluginSortStruct := PluginSort{
+			Query: QuerySort{
 				Name:         "",
 				Description:  "",
 				Context:      "",
@@ -228,46 +190,44 @@ func main() {
 				ModifiedTime: 0,
 				Groups:       y,
 				Type:         "vuln",
-				Tool:         "listvuln",
+				Tool:         "sumid",
 				SourceType:   "cumulative",
 				StartOffset:  0,
 				EndOffset:    50,
-				Filters: []Filters{
-					{ID: "pluginID", FilterName: "pluginID", Operator: "=", Type: "vuln", IsPredefined: true, Value: str},
+				Filters: []FiltersSort{
 					{ID: "firstSeen", FilterName: "firstSeen", Operator: "=", Type: "vuln", IsPredefined: true, Value: "0:7"},
 					{ID: "severity", FilterName: "severity", Operator: "=", Type: "vuln", IsPredefined: true, Value: levl},
 				},
-				VulnTool: "listvuln",
+				SortColumn:    "severity",
+				SortDirection: "desc",
+				VulnTool:      "sumid",
 			},
 			SourceType: "cumulative",
+			SortField:  "severity",
+			SortDir:    "desc",
 			Columns:    y,
 			Type:       "vuln",
 		}
 
-		jsonData, _ := json.Marshal(plugStruct)
+		jsonDataSort, _ := json.Marshal(PluginSortStruct)
 
-		jStr_med := []byte(jsonData)
+		jStr_medSort := []byte(jsonDataSort)
 
-		///////////////////////////////////// POST STRING ////////////////////////////////////
+		///////////////////////// MUX ///////////////////////
 
-		body_med := HttpQueryPost(url, jStr_med)
+		//fmt.Println(string(jStr_medSort))
+
+		body_med := HttpQueryPost(url, jStr_medSort)
+
 		u_med := ConvertMap(body_med)
 
-		for _, item := range u_med.([]interface{}) {
-			fmt.Printf("%v ", item.(map[string]interface{})["dnsName"])
-			fmt.Printf("%v ", item.(map[string]interface{})["uuid"])
+		for _, item_med := range u_med.([]interface{}) {
+			fmt.Printf("%v ", item_med.(map[string]interface{})["pluginID"])
 
-			DNSFileName := ""
-			DNSFileName = fmt.Sprintf("%v", item.(map[string]interface{})["dnsName"])
+			str := ""
+			str = fmt.Sprintf("%v", item_med.(map[string]interface{})["pluginID"])
 
-			Uuid := ""
-			Uuid = fmt.Sprintf("%v", item.(map[string]interface{})["uuid"])
-
-			file, _ := os.Create(str + "_" + DNSFileName + ".txt")
-			file.WriteString(DNSFileName + " ")
-			file.WriteString(" " + Uuid)
-
-			plugStructDetail := Plugin{
+			plugStruct := Plugin{
 				Query: Query{
 					Name:         "",
 					Description:  "",
@@ -277,50 +237,130 @@ func main() {
 					ModifiedTime: 0,
 					Groups:       y,
 					Type:         "vuln",
-					Tool:         "vulndetails",
+					Tool:         "listvuln",
 					SourceType:   "cumulative",
 					StartOffset:  0,
 					EndOffset:    50,
 					Filters: []Filters{
-						{ID: "uuid", FilterName: "uuid", Operator: "=", Type: "vuln", IsPredefined: true, Value: Uuid},
 						{ID: "pluginID", FilterName: "pluginID", Operator: "=", Type: "vuln", IsPredefined: true, Value: str},
-						{ID: "port", FilterName: "port", Operator: "=", Type: "vuln", IsPredefined: true, Value: "0"},
 						{ID: "firstSeen", FilterName: "firstSeen", Operator: "=", Type: "vuln", IsPredefined: true, Value: "0:7"},
 						{ID: "severity", FilterName: "severity", Operator: "=", Type: "vuln", IsPredefined: true, Value: levl},
 					},
-					VulnTool: "vulndetails",
+					VulnTool: "listvuln",
 				},
 				SourceType: "cumulative",
 				Columns:    y,
 				Type:       "vuln",
 			}
 
-			jsonDataVulnDetail, _ := json.Marshal(plugStructDetail)
+			jsonData, _ := json.Marshal(plugStruct)
 
-			jStr_vulndetail := []byte(jsonDataVulnDetail)
-			//fmt.Println(string(jStr_vulndetail))
+			jStr_med := []byte(jsonData)
 
-			body_vulndetail := HttpQueryPost(url, jStr_vulndetail)
-			u_vulndetail := ConvertMap(body_vulndetail)
+			///////////////////////////////////// POST STRING ////////////////////////////////////
 
-			for _, item := range u_vulndetail.([]interface{}) {
-				fmt.Printf("%v ", item.(map[string]interface{})["pluginText"])
+			body_med := HttpQueryPost(url, jStr_med)
+			u_med := ConvertMap(body_med)
 
-				PlugTextW := ""
-				PlugTextW = fmt.Sprintf("%v", item.(map[string]interface{})["pluginText"])
-				reHtml := regexp.MustCompile("(?m)[\r\n]+^.*plugin_output.*$")
-				re := regexp.MustCompile("(?m)[\r\n]+^.*Installed package.*$")
-				resHtml := reHtml.ReplaceAllString(PlugTextW, "")
-				res := re.ReplaceAllString(resHtml, "")
-				res1 := strings.ReplaceAll(res, "Fixed package", "")
-				res2 := strings.ReplaceAll(res1, ":", "")
-				res3 := strings.ReplaceAll(res2, "\n", " ")
+			for _, item := range u_med.([]interface{}) {
+				fmt.Printf("%v ", item.(map[string]interface{})["dnsName"])
+				fmt.Printf("%v ", item.(map[string]interface{})["uuid"])
 
-				file.WriteString(res3)
-				defer file.Close()
+				DNSFileName := ""
+				DNSFileName = fmt.Sprintf("%v", item.(map[string]interface{})["dnsName"])
+
+				Uuid := ""
+				Uuid = fmt.Sprintf("%v", item.(map[string]interface{})["uuid"])
+
+				file, _ := os.Create(str + "_" + DNSFileName + ".txt")
+				//file.WriteString(DNSFileName + " ")
+				//file.WriteString(" " + Uuid)
+
+				plugStructDetail := Plugin{
+					Query: Query{
+						Name:         "",
+						Description:  "",
+						Context:      "",
+						Status:       -1,
+						CreatedTime:  0,
+						ModifiedTime: 0,
+						Groups:       y,
+						Type:         "vuln",
+						Tool:         "vulndetails",
+						SourceType:   "cumulative",
+						StartOffset:  0,
+						EndOffset:    50,
+						Filters: []Filters{
+							{ID: "uuid", FilterName: "uuid", Operator: "=", Type: "vuln", IsPredefined: true, Value: Uuid},
+							{ID: "pluginID", FilterName: "pluginID", Operator: "=", Type: "vuln", IsPredefined: true, Value: str},
+							{ID: "port", FilterName: "port", Operator: "=", Type: "vuln", IsPredefined: true, Value: "0"},
+							{ID: "firstSeen", FilterName: "firstSeen", Operator: "=", Type: "vuln", IsPredefined: true, Value: "0:7"},
+							{ID: "severity", FilterName: "severity", Operator: "=", Type: "vuln", IsPredefined: true, Value: levl},
+						},
+						VulnTool: "vulndetails",
+					},
+					SourceType: "cumulative",
+					Columns:    y,
+					Type:       "vuln",
+				}
+
+				jsonDataVulnDetail, _ := json.Marshal(plugStructDetail)
+
+				jStr_vulndetail := []byte(jsonDataVulnDetail)
+				//fmt.Println(string(jStr_vulndetail))
+
+				body_vulndetail := HttpQueryPost(url, jStr_vulndetail)
+				u_vulndetail := ConvertMap(body_vulndetail)
+
+				for _, item := range u_vulndetail.([]interface{}) {
+					fmt.Printf("%v ", item.(map[string]interface{})["pluginText"])
+
+					PlugTextW := ""
+					PlugTextW = fmt.Sprintf("%v", item.(map[string]interface{})["pluginText"])
+					reHtml := regexp.MustCompile("(?m)[\r\n]+^.*plugin_output.*$")
+					re := regexp.MustCompile("(?m)[\r\n]+^.*Installed package.*$")
+					resHtml := reHtml.ReplaceAllString(PlugTextW, "")
+					res := re.ReplaceAllString(resHtml, "")
+					res1 := strings.ReplaceAll(res, "Fixed package", "")
+					res2 := strings.ReplaceAll(res1, ":", "")
+					res3 := strings.ReplaceAll(res2, "\n", " ")
+					res4 := strings.ReplaceAll(res3, "<plugin_output>", "")
+					res5 := strings.ReplaceAll(res4, "           ", " ")
+					res6 := strings.ReplaceAll(res5, "_", " ")
+					parts := strings.Split(res6, " ")
+					fmt.Printf("%q\n", parts)
+
+					for k, _ := range parts {
+						if k%2 == 1 {
+							file.WriteString(parts[k] + " ")
+							defer file.Close()
+						} else {
+							fmt.Println(parts[k])
+						}
+					}
+
+				}
 			}
-
 		}
-	}
+	})
+
+	http.ListenAndServe(":8080", mux)
 
 }
+
+/*
+parts := strings.Split(res5, "_")
+					fmt.Printf("%q\n", parts)
+
+					for k, _ := range parts {
+						if k%2 == 0 {
+							file.WriteString(parts[k])
+							defer file.Close()
+						} else {
+							fmt.Println(parts[k])
+						}
+					}
+*/
+
+//file.WriteString(res5 + " ")
+//defer file.Close()
