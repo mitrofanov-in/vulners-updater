@@ -84,7 +84,7 @@ type PluginSort struct {
 	Type       string        `json:"type"`
 }
 
-//var strHead = "accesskey" + "=" + "9e3330df67be4330a21599ee66d87d9c" + "; " + "secretkey" + "=" + "d74e49ad9de64afbb0d76cc8c36d893a"
+
 
 //// GLOBAL ////////
 
