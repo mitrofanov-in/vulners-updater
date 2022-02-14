@@ -84,8 +84,6 @@ type PluginSort struct {
 	Type       string        `json:"type"`
 }
 
-
-
 //// GLOBAL ////////
 
 var tnblUser string = GoDotEnvVariable("tnblUser")
@@ -272,7 +270,7 @@ func main() {
 				Uuid := ""
 				Uuid = fmt.Sprintf("%v", item.(map[string]interface{})["uuid"])
 
-				file, _ := os.Create("vulners-hosts/" + str + "_" + DNSFileName + ".txt")
+				file, _ := os.Create("vulners-hosts/" + str + "_" + DNSFileName)
 				//file.WriteString(DNSFileName + " ")
 				//file.WriteString(" " + Uuid)
 
