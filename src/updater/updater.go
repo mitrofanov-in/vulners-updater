@@ -324,8 +324,8 @@ func main() {
 					resPath := rePath.ReplaceAllString(resInstPack, "")
 					resFixVer := reFixVer.ReplaceAllString(resPath, "")
 					resFixPack := strings.ReplaceAll(resFixVer, "Fixed package", "")
-					resFX := strings.ReplaceAll(resFixPack, "Fixed version", "")
-					resSymb := strings.ReplaceAll(resFX, ":", "")
+					//resFX := strings.ReplaceAll(resFixPack, "Fixed version", "")
+					resSymb := strings.ReplaceAll(resFixPack, ":", "")
 					resN := strings.ReplaceAll(resSymb, "\n", " ")
 					resPlug := strings.ReplaceAll(resN, "<plugin_output>", "")
 					resSpc := strings.ReplaceAll(resPlug, "           ", " ")
@@ -343,7 +343,9 @@ func main() {
 					}
 
 				}
+				defer file.Close()
 			}
+
 		}
 	})
 
