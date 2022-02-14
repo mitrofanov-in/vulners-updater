@@ -1,1 +1,0 @@
-linux-generic linux-headers-5.4.0-97 linux-headers-5.4.0-97-generic linux-headers-generic linux-headers-virtual linux-image-5.4.0-97-generic linux-image-generic linux-libc-dev linux-modules-5.4.0-97-generic linux-modules-extra-5.4.0-97-generic linux-virtual 
